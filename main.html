@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Object Detection</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+</head>
+<body>
+    <h1>Object Detection</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            });
+
+        let model;
+        cocoSsd.load().then(loadedModel => {
+            model = loadedModel;
+            detectFrame();
+        });
+
+        function detectFrame() {
+            model.detect(video).then(predictions => {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.drawImage(video, 0, 0, ctx.canvas.width, ctx.canvas.height);
+                
+                predictions.forEach(prediction => {
+                    const [x, y, width, height] = prediction.bbox;
+                    ctx.strokeStyle = '#00FFFF';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(x, y, width, height);
+                    ctx.fillStyle = '#00FFFF';
+                    ctx.fillText(
+                        prediction.class + ' - ' + Math.round(prediction.score * 100) + '%',
+                        x, y > 10 ? y - 5 : 10
+                    );
+                });
+
+                requestAnimationFrame(detectFrame);
+            });
+        }
+    </script>
+</body>
+</html>
